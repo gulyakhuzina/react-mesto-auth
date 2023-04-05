@@ -18,6 +18,7 @@ import Register from "./Register";
 import * as auth from '../auth.js';
 import logoSuccess from '../images/Success.svg';
 import logoFail from '../images/Fail.svg';
+import { useForm } from "../hooks/useForm";
 
 function App() {
   const [isEditProfilePopupOpen, setisEditProfilePopupOpen] = React.useState(false);
@@ -30,6 +31,10 @@ function App() {
   const [cards, setCards] = React.useState([]);
   const [loggedIn, setLoggedIn] = React.useState(false);
   const [userData, setUserData] = React.useState('');
+  const {values, handleChange, setValues} = useForm({
+    password: '',
+    email: ''
+  });
 
   const navigate = useNavigate();
 
@@ -40,13 +45,17 @@ function App() {
   function tokenCheck() {
     const jwt = localStorage.getItem('jwt');
     if (jwt) {
-      auth.getContent(jwt).then((res) => {
-        if (res) {
-          setLoggedIn(true);
-          setUserData(res.data.email);
-          navigate("/", { replace: true });
-        }
-      });
+      auth.getContent(jwt)
+        .then((res) => {
+          if (res) {
+            setLoggedIn(true);
+            setUserData(res.data.email);
+            navigate("/", { replace: true });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        })
     }
   }
 
@@ -143,6 +152,34 @@ function App() {
       })
   }
 
+  function handleSubmitAuth(e) {
+    e.preventDefault();
+    if (!values.password || !values.email) {
+      return;
+    }
+    auth.authorize(values.password, values.email)
+      .then((data) => {
+        if (data.token) {
+          setValues({ password: '', email: '' });
+          handleLogin();
+          navigate('/', { replace: true });
+        }
+      })
+      .catch(err => console.log(err));
+  }
+
+  function handleSubmitReg(e) {
+    e.preventDefault();
+    auth.register(values.password, values.email)
+      .then((res) => {
+        handleSuccessPopupOpen();
+      })
+      .catch((err) => {
+        handleFailPopupOpen();
+        console.log(err);
+      })
+  }
+
   React.useEffect(() => {
     if (loggedIn) {
       Promise.all([api.getInitialCards(), api.getUserInfo()])
@@ -161,8 +198,23 @@ function App() {
       <div className="page">
         <Header userData={userData} />
         <Routes>
-          <Route path="/signup" element={<Register onSuccess={handleSuccessPopupOpen} onFail={handleFailPopupOpen} />} />
-          <Route path="/signin" element={<Login handleLogin={handleLogin} />} />
+          <Route path="/signup" element={
+            <Register
+              onSubmit={handleSubmitReg}
+              onChange={handleChange}
+              email={values.email}
+              password={values.password}
+            />} 
+          />
+          <Route path="/signin" element={
+            <Login
+              handleLogin={handleLogin}
+              onSubmit={handleSubmitAuth}
+              onChange={handleChange}
+              email={values.email}
+              password={values.password}
+            />} 
+          />
           <Route path="/" element={<ProtectedRouteElement
             element={Main}
             cards={cards}

@@ -8,7 +8,6 @@ function InfoTooltip(props) {
   function handleOnClick() {
     props.onClose();
     if (props.reg) {
-      console.log(props.reg);
       navigate('/signin', { replace: true });
     }
   }

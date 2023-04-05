@@ -1,31 +1,28 @@
 import React from "react";
 import PopupWithForm from "./PopupWithForm";
 import { CurrentUserContext } from "../contexts/CurrentUserContext";
+import { useForm } from "../hooks/useForm";
 
 function EditProfilePopup(props) {
   const currentUser = React.useContext(CurrentUserContext);
-  const [name, setName] = React.useState('');
-  const [description, setDescription] = React.useState('');
-
-  function handleChangeName(e) {
-    setName(e.target.value);
-  }
-
-  function handleChangeAbout(e) {
-    setDescription(e.target.value);
-  }
+  const {values, handleChange, setValues} = useForm({
+    name: '',
+    about: ''
+  });
 
   function handleSubmit(e) {
     e.preventDefault();
     props.onUpdateUser({
-      name,
-      about: description,
+      name: values.name,
+      about: values.about,
     });
   }
 
   React.useEffect(() => {
-    setName(currentUser.name);
-    setDescription(currentUser.about);
+    setValues({
+      name: currentUser.name, 
+      about: currentUser.about
+    })
   }, [currentUser, props.isOpen]); 
 
   return (
@@ -37,9 +34,9 @@ function EditProfilePopup(props) {
       onClose ={props.onClose}
       onSubmit={handleSubmit}
     >
-      <input id="name" name="name" className="popup__input" value={name || ''} onChange={handleChangeName} type="text" minLength="2" maxLength="40" autoFocus placeholder="Ваше имя" required />
+      <input id="name" name="name" className="popup__input" value={values.name || ''} onChange={handleChange} type="text" minLength="2" maxLength="40" autoFocus placeholder="Ваше имя" required />
       <span id="name-error" className="popup__error"></span>
-      <input id="about" name="about" className="popup__input" value={description || ''} onChange={handleChangeAbout} type="text" minLength="2" maxLength="200" placeholder="Ваш род деятельности" required />
+      <input id="about" name="about" className="popup__input" value={values.about || ''} onChange={handleChange} type="text" minLength="2" maxLength="200" placeholder="Ваш род деятельности" required />
       <span id="about-error" className="popup__error"></span>
     </PopupWithForm>
   );
